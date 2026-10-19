@@ -36,9 +36,9 @@ English Steps — это pet-проект, созданный для изуче�
 
 ## 🚀 Запуск проекта
 
-\`\`\`bash
+```bash
 # Клонируйте репозиторий
-git clone https://github.com/your-username/english-steps.git
+git clone https://github.com/smesnoi/english-steps.git
 cd english-steps
 
 # Установите зависимости
@@ -49,38 +49,3 @@ npm run dev
 
 # Соберите production-версию
 npm run build
-\`\`\`
-
-## 📸 Скриншоты
-
-![Главная страница](./screenshots/home.PNG)
-*Главная страница со статистикой*
-
-![Карточки](./screenshots/flashcards.PNG)
-*Режим карточек*
-
-![Тест](./screenshots/quiz.PNG)
-*Тест на выбор перевода*
-
-![Словарь](./screenshots/dictionary.PNG)
-*Словарь с фильтрами*
-
-![Прогресс](./screenshots/progress.PNG)
-*График прогресса*
-
-## 📂 Структура проекта
-
-\`\`\`text
-src/
-├── components/       # UI-компоненты (сессии, словарь, прогресс)
-├── data/             # Стартовый набор слов (100 шт.)
-├── hooks/            # Кастомные хуки (озвучка, анимация)
-├── pages/            # Страницы приложения (6 разделов)
-├── store/            # Zustand-стор (слова, прогресс, тема)
-├── types/            # TypeScript-типы
-└── utils/            # Логика (SRS, даты, графики, localStorage)
-\`\`\`
-
-## 📄 Лицензия
-
-Этот проект создан в учебных целях. Вы можете свободно использовать его код для своих pet-проектов.
