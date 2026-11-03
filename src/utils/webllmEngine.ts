@@ -226,7 +226,7 @@ export function createWebLLMController(deps: WebLLMDeps): WebLLMController {
         throw new WebLLMError(MESSAGES.modelMissing(modelId));
       }
 
-      createdWorker = deps.createWorker();
+            createdWorker = deps.createWorker();
       const created = await library.CreateWebWorkerMLCEngine(createdWorker, modelId, {
         initProgressCallback: (report) => {
           if (myEpoch !== epoch) return;
@@ -235,6 +235,7 @@ export function createWebLLMController(deps: WebLLMDeps): WebLLMController {
             statusText: report.text,
           });
         },
+        useIndexedDBCache: false,
       });
 
       if (myEpoch !== epoch) {
