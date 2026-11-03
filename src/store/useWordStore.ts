@@ -1,17 +1,17 @@
 import { useMemo } from 'react';
 import { create } from 'zustand';
-import { STARTER_WORDS } from '@/data/words';
-import type { Box, Level, SrsMap, SrsState, Word, WordStatus } from '@/types';
-import { calculateStreak, toDayKey } from '@/utils/date';
+import { STARTER_WORDS } from '../data/words';
+import type { Level, SrsMap, StoredSrsState, Word, WordStatus } from '../types';
+import { calculateStreak, toDayKey } from '../utils/date';
 import {
   applyAnswer,
   buildStudyQueue,
   getStatus,
   isDue,
+  migrateSrsMap,
   type StudyQueueOptions,
-} from '@/utils/srs';
-import { STORAGE_KEYS, loadFromStorage, saveToStorage } from '@/utils/storage';
-
+} from '../utils/srs';
+import { STORAGE_KEYS, loadFromStorage, saveToStorage } from '../utils/storage';
 // ───────────────────────────── Типы ─────────────────────────────
 
 /** Статистика за один день. */
@@ -41,8 +41,8 @@ export interface NewWordInput {
   exampleTranslation: string;
 }
 
-/** Слово + вычисленные из srs статус и коробка (для страницы словаря). */
-export type WordWithStatus = Word & { srsStatus: WordStatus; box: Box | null };
+/** Слово + вычисленный из srs статус (для страницы словаря). */
+export type WordWithStatus = Word & { srsStatus: WordStatus };
 
 // ───────────────────────── Валидаторы ─────────────────────────
 // Данные из localStorage могут быть повреждены или устареть — проверяем форму.
@@ -95,21 +95,26 @@ function isWordArray(value: unknown): value is Word[] {
   return new Set(items.map((item) => (item as Word).id)).size === items.length;
 }
 
-function isSrsState(value: unknown): value is SrsState {
+/** Запись srs: и новый формат (FSRS), и старый (только box и nextReviewAt). */
+function isStoredSrsState(value: unknown): value is StoredSrsState {
   if (!isRecord(value)) return false;
-  const { box, nextReviewAt } = value;
+  const { nextReviewAt, box, stability, difficulty, repetitions, lapses, lastReviewedAt } = value;
+  const isOptionalNumber = (field: unknown): boolean =>
+    field === undefined || (typeof field === 'number' && Number.isFinite(field));
   return (
-    typeof box === 'number' &&
-    Number.isInteger(box) &&
-    box >= 0 &&
-    box <= 5 &&
     typeof nextReviewAt === 'number' &&
-    Number.isFinite(nextReviewAt)
+    Number.isFinite(nextReviewAt) &&
+    (box === undefined || (typeof box === 'number' && Number.isInteger(box) && box >= 0 && box <= 5)) &&
+    isOptionalNumber(stability) &&
+    isOptionalNumber(difficulty) &&
+    isOptionalNumber(repetitions) &&
+    isOptionalNumber(lapses) &&
+    isOptionalNumber(lastReviewedAt)
   );
 }
 
-function isSrsMap(value: unknown): value is SrsMap {
-  return isRecord(value) && Object.values(value).every(isSrsState);
+function isStoredSrsMap(value: unknown): value is Record<string, StoredSrsState | undefined> {
+  return isRecord(value) && Object.values(value).every(isStoredSrsState);
 }
 
 /** День из хранилища: старые записи могут быть без learnedCount. */
@@ -182,6 +187,67 @@ function persist(key: string, value: unknown): void {
   }
 }
 
+// ───────────────────────────── Резервная копия ─────────────────────────────
+
+/** Метка файла: по ней отличаем свои резервные копии от чужих JSON. */
+const BACKUP_APP = 'english-steps';
+/** Версия формата файла. При изменении формата увеличиваем её и учим parseBackup читать старые. */
+const BACKUP_VERSION = 1;
+// Предохранители от огромных и мусорных файлов
+const MAX_BACKUP_CHARS = 2_000_000;
+const MAX_BACKUP_WORDS = 5000;
+const MAX_TEXT_LENGTH = 300;
+
+interface ParsedBackup {
+  words: Word[];
+  srs: SrsMap;
+  dailyStats: DailyStats;
+}
+
+/** Слово из файла не должно ломать интерфейс: разумная длина текстов, без служебного id. */
+function isReasonableWord(word: Word): boolean {
+  return (
+    word.id !== '__proto__' &&
+    [word.id, word.en, word.ru, word.transcription, word.example, word.exampleTranslation].every(
+      (text) => text.length <= MAX_TEXT_LENGTH,
+    )
+  );
+}
+
+/**
+ * Разбирает и проверяет резервную копию, ничего не меняя. Использует те же проверки,
+ * что и загрузка из localStorage, поэтому записи старого формата (Лейтнер) тоже принимаются.
+ * null — файл не наш, повреждён или не проходит проверку.
+ */
+function parseBackup(json: string): ParsedBackup | null {
+  if (json.length > MAX_BACKUP_CHARS) return null;
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(json);
+  } catch {
+    return null;
+  }
+
+  if (!isRecord(raw) || raw.app !== BACKUP_APP) return null;
+  const { version, data } = raw;
+  if (typeof version !== 'number' || !Number.isInteger(version)) return null;
+  if (version < 1 || version > BACKUP_VERSION) return null;
+  if (!isRecord(data)) return null;
+
+  const { words, srs, dailyStats } = data;
+  if (!isWordArray(words) || words.length > MAX_BACKUP_WORDS || !words.every(isReasonableWord)) {
+    return null;
+  }
+  if (!isStoredSrsMap(srs) || !isStoredDailyStats(dailyStats)) return null;
+
+  return {
+    words: [...words],
+    srs: pruneSrs(migrateSrsMap(srs), words),
+    dailyStats: normalizeDailyStats(dailyStats),
+  };
+}
+
 // ───────────────────────────── Store ─────────────────────────────
 
 interface WordState {
@@ -198,6 +264,13 @@ interface WordState {
   addWord: (input: NewWordInput) => void;
   removeWord: (id: string) => void;
   resetProgress: () => void;
+  /** Слова, прогресс повторения и статистика одним JSON — для резервной копии. */
+  exportData: () => string;
+  /**
+   * Заменяет слова и прогресс данными из резервной копии.
+   * false — файл неверный или не удалось сохранить; текущие данные при этом не меняются.
+   */
+  importData: (json: string) => boolean;
 }
 
 /**
@@ -216,7 +289,12 @@ export const useWordStore = create<WordState>()((set, get) => ({
     if (get().hydrated) return;
 
     const storedWords = loadFromStorage<Word[]>(STORAGE_KEYS.words, [], isWordArray);
-    const storedSrs = loadFromStorage<SrsMap>(STORAGE_KEYS.srs, {}, isSrsMap);
+    // Записи старого формата (Лейтнер) принимаются и мигрируют в память; на диск пишутся при первом ответе
+    const storedSrs = loadFromStorage<Record<string, StoredSrsState | undefined>>(
+      STORAGE_KEYS.srs,
+      {},
+      isStoredSrsMap,
+    );
     const storedStats = loadFromStorage<StoredDailyStats>(
       STORAGE_KEYS.dailyStats,
       {},
@@ -243,7 +321,7 @@ export const useWordStore = create<WordState>()((set, get) => ({
 
     set({
       words,
-      srs: pruneSrs(storedSrs, words),
+      srs: pruneSrs(migrateSrsMap(storedSrs), words),
       dailyStats: normalizeDailyStats(storedStats),
       hydrated: true,
     });
@@ -328,6 +406,45 @@ export const useWordStore = create<WordState>()((set, get) => ({
     persist(STORAGE_KEYS.srs, {});
     persist(STORAGE_KEYS.dailyStats, {});
   },
+
+  exportData: () => {
+    const { words, srs, dailyStats } = get();
+    return JSON.stringify(
+      {
+        app: BACKUP_APP,
+        version: BACKUP_VERSION,
+        exportedAt: new Date().toISOString(),
+        // seeded всегда true: список слов в файле считается окончательным, стартовый набор заново не добавляется
+        data: { words, srs, dailyStats, seeded: true },
+      },
+      null,
+      2,
+    );
+  },
+
+  importData: (json) => {
+    const { hydrated, words: oldWords, srs: oldSrs, dailyStats: oldStats } = get();
+    if (!hydrated) return false;
+
+    const parsed = parseBackup(json);
+    if (parsed === null) return false;
+
+    // Всё или ничего: если не хватило места в localStorage, возвращаем прежние данные
+    const saved =
+      saveToStorage(STORAGE_KEYS.words, parsed.words) &&
+      saveToStorage(STORAGE_KEYS.srs, parsed.srs) &&
+      saveToStorage(STORAGE_KEYS.dailyStats, parsed.dailyStats) &&
+      saveToStorage(STORAGE_KEYS.seeded, true);
+    if (!saved) {
+      saveToStorage(STORAGE_KEYS.words, oldWords);
+      saveToStorage(STORAGE_KEYS.srs, oldSrs);
+      saveToStorage(STORAGE_KEYS.dailyStats, oldStats);
+      return false;
+    }
+
+    set({ words: parsed.words, srs: parsed.srs, dailyStats: parsed.dailyStats });
+    return true;
+  },
 }));
 
 // ──────────────────────────── Селекторы ────────────────────────────
@@ -398,17 +515,14 @@ export function useTodayStats(): DayStats {
   );
 }
 
-/** Слова с вычисленным статусом и коробкой — для страницы словаря. */
+/** Слова с вычисленным статусом — для страницы словаря. */
 export function useWordsWithStatus(): WordWithStatus[] {
   const words = useWordStore((state) => state.words);
   const srs = useWordStore((state) => state.srs);
 
   return useMemo(
     () =>
-      words.map((word) => {
-        const state = srs[word.id];
-        return { ...word, srsStatus: getStatus(state), box: state?.box ?? null };
-      }),
+      words.map((word) => ({ ...word, srsStatus: getStatus(srs[word.id]) })),
     [words, srs],
   );
 }

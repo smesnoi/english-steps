@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { Check, Volume2, X } from 'lucide-react';
+import { AiExample } from '@/components/flashcards/AiExample';
 import { EmptyQueue } from '@/components/session/EmptyQueue';
 import { SessionProgress } from '@/components/session/SessionProgress';
 import { SessionSummary, type SessionResult } from '@/components/session/SessionSummary';
@@ -142,7 +143,7 @@ interface FlipCardProps {
 }
 
 const FACE_BASE =
-  'absolute inset-0 flex flex-col items-center justify-center rounded-3xl border p-6 text-center shadow-lg [backface-visibility:hidden]';
+  'absolute inset-0 flex flex-col items-center rounded-3xl border p-6 text-center shadow-lg [backface-visibility:hidden]';
 
 function FlipCard({ word, isFlipped, onFlip }: FlipCardProps) {
   if (!word) return null;
@@ -168,7 +169,7 @@ function FlipCard({ word, isFlipped, onFlip }: FlipCardProps) {
           {/* Лицевая сторона */}
           <div
             aria-hidden={isFlipped}
-            className={`${FACE_BASE} gap-2 border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900`}
+            className={`${FACE_BASE} justify-center gap-2 border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900`}
           >
             <p className="text-4xl font-semibold tracking-tight sm:text-5xl">{word.en}</p>
             <p className="text-lg text-stone-500 dark:text-stone-400">{word.transcription}</p>
@@ -181,7 +182,7 @@ function FlipCard({ word, isFlipped, onFlip }: FlipCardProps) {
           <div
             aria-hidden={!isFlipped}
             style={{ transform: 'rotateY(180deg)' }}
-            className={`${FACE_BASE} gap-6 border-teal-200 bg-teal-50 dark:border-teal-900 dark:bg-teal-950`}
+            className={`${FACE_BASE} justify-start gap-4 pt-7 border-teal-200 bg-teal-50 dark:border-teal-900 dark:bg-teal-950`}
           >
             <p className="text-3xl font-semibold tracking-tight sm:text-4xl">{word.ru}</p>
             <div className="w-full border-t border-teal-200 pt-5 dark:border-teal-900">
@@ -192,6 +193,21 @@ function FlipCard({ word, isFlipped, onFlip }: FlipCardProps) {
             </div>
           </div>
         </div>
+      </div>
+
+      {/*
+        ИИ-примеры — отдельный слой поверх нижней части обратной стороны, а не внутри карточки:
+        карточка — role="button", и кнопки внутри неё переворачивали бы её, не получали бы клавиатуру
+        и были бы скрыты от скринридеров. Слой виден только на перевёрнутой карточке
+        (invisible убирает его и из порядка табуляции). Высота карточки не меняется,
+        поэтому кнопки «Знаю / Не знаю» не смещаются; длинный ответ прокручивается внутри.
+      */}
+      <div
+        className={`absolute inset-x-0 bottom-0 z-10 max-h-[52%] overflow-y-auto overscroll-contain rounded-b-3xl border-t border-teal-200 bg-teal-50 px-4 pb-4 pt-3 transition-opacity duration-200 dark:border-teal-900 dark:bg-teal-950 ${
+          isFlipped ? 'visible opacity-100 delay-300' : 'invisible opacity-0'
+        }`}
+      >
+       <AiExample word={word.en} />
       </div>
 
       {/* Озвучка — заглушка. Кнопка рядом с карточкой, а не внутри: кнопка в кнопке недопустима */}
