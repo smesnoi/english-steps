@@ -7,6 +7,7 @@
 ![Vite](https://img.shields.io/badge/Vite-8-purple)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-cyan)
 ![WebLLM](https://img.shields.io/badge/WebLLM-Llama_3.2-orange)
+![Cloudflare Pages](https://img.shields.io/badge/Cloudflare_Pages-live-orange)
 
 ## 📖 О проекте
 
@@ -27,7 +28,7 @@ English Steps — это pet-проект, созданный для изуче�
 - **Vite** — сборка и dev-сервер.
 - **Tailwind CSS** — стилизация (включая тёмную тему).
 - **Zustand** — стейт-менеджмент с сохранением в `localStorage`.
-- **React Router (HashRouter)** — навигация (готово к деплою на GitHub Pages).
+- **React Router (HashRouter)** — навигация (готово к деплою на статическом хостинге).
 - **Web Speech API** — распознавание и синтез речи.
 - **WebLLM (@mlc-ai/web-llm)** — локальная нейросеть (Llama 3.2 1B) прямо в браузере через WebGPU. Работает офлайн, без API-ключей.
 - **FSRS** — адаптивный алгоритм интервального повторения.
@@ -53,8 +54,16 @@ npm install
 npm run dev
 
 # Соберите production-версию
-npm run build 
+npm run build
 ```
+## 🌐 Деплой
+
+Проект развернут на двух платформах:
+
+1. **GitHub Pages** (без ИИ из-за ограничений CSP): [https://smesnoi.github.io/english-steps/](https://smesnoi.github.io/english-steps/)
+2. **Cloudflare Pages** (полная версия с ИИ, доступна через VPN): [https://english-steps.pages.dev](https://english-steps.pages.dev)
+
+*ИИ-примеры работают только на Cloudflare Pages (или локально), так как GitHub Pages блокирует `eval` и `WebAssembly` через строгий CSP.*
 
 ## 📸 Скриншоты
 
@@ -80,13 +89,13 @@ npm run build
 
 ```text
 src/
-├── components/       # UI-компоненты (сессии, словарь, прогресс, грамматика)
-├── data/             # Стартовый набор слов и темы грамматики
-├── hooks/            # Кастомные хуки (озвучка, микрофон, WebLLM)
-├── pages/            # Страницы приложения (8 разделов)
-├── store/            # Zustand-стор (слова, прогресс, тема)
+├── components/       # UI (сессии, словарь, прогресс, грамматика)
+├── data/             # Слова и темы грамматики
+├── hooks/            # Хуки (озвучка, микрофон, WebLLM)
+├── pages/            # Страницы (8 разделов)
+├── store/            # Zustand-стор
 ├── types/            # TypeScript-типы
-└── utils/            # Логика (FSRS, фонетика, графики, парсинг ИИ)
+└── utils/            # Логика (FSRS, фонетика, графики)
 ```
 
 ## 📄 Лицензия
