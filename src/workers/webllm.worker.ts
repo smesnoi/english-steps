@@ -1,5 +1,4 @@
-// Загружаем библиотеку с CDN
-// @ts-expect-error — модуль загружается с внешнего URL, его типов нет в проекте
+// @ts-expect-error
 import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.79/+esm').then((module) => {
   const handler = new module.WebWorkerMLCEngineHandler();
   self.onmessage = (message: MessageEvent) => {
