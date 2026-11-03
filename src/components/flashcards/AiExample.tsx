@@ -142,20 +142,6 @@ export function AiExample({ word }: AiExampleProps) {
     }
   };
 
-  // Проверка, что мы на локальном сервере (ИИ не работает на GitHub Pages из-за CSP)
-  const isLocalhost =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1');
-
-  if (!isLocalhost) {
-    return (
-      <p className="text-xs text-stone-500 dark:text-stone-400">
-        ИИ-примеры доступны только при локальном запуске приложения (ограничение GitHub Pages).
-      </p>
-    );
-  }
-
   if (!isSupported) {
     return (
       <p className="text-xs text-stone-500 dark:text-stone-400">
