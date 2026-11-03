@@ -7,12 +7,15 @@ export default defineConfig({
   base: '/english-steps/',
   plugins: [
     react(),
-    webllmAssistant(), // <-- Плагин для WebLLM
+    webllmAssistant(),
   ],
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
-  // Убираем external, чтобы WebLLM собрался в бандл
+  build: {
+    // Отключаем минификацию, чтобы Vite не "вырезал" внутренние переменные WebLLM
+    minify: false, 
+  },
 });
