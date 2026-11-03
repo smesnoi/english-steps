@@ -1,21 +1,28 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
-import { webllmAssistant } from '@arronqzy/abuilder/vite';
 
 export default defineConfig({
   base: '/english-steps/',
-  plugins: [
-    react(),
-    webllmAssistant(),
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  optimizeDeps: {
+    exclude: ['@mlc-ai/web-llm'],
+  },
   build: {
-    // Отключаем минификацию, чтобы Vite не "вырезал" внутренние переменные WebLLM
-    minify: false, 
+    minify: false,
+    rollupOptions: {
+      external: ['@mlc-ai/web-llm'],
+    },
+  },
+  worker: {
+    format: 'es',
+    rollupOptions: {
+      external: ['@mlc-ai/web-llm'],
+    },
   },
 });
