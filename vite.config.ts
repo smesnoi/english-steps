@@ -10,15 +10,4 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
-  build: {
-    rollupOptions: {
-      external: ['@mlc-ai/web-llm'],
-    },
-  },
-  worker: {
-    format: 'es',
-    rollupOptions: {
-      external: ['@mlc-ai/web-llm'],
-    },
-  },
 });
