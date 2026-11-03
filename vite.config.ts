@@ -15,4 +15,10 @@ export default defineConfig({
       external: ['@mlc-ai/web-llm'],
     },
   },
+  worker: {
+    format: 'es',
+    rollupOptions: {
+      external: ['@mlc-ai/web-llm'],
+    },
+  },
 });
