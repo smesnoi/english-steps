@@ -59,7 +59,11 @@ export interface WebLLMModuleLike {
   CreateWebWorkerMLCEngine(
     worker: WorkerLike,
     modelId: string,
-    config: { initProgressCallback: (report: InitProgressReportLike) => void },
+    config: {
+      initProgressCallback: (report: InitProgressReportLike) => void;
+      useIndexedDBCache?: boolean;
+      appConfig?: { model_list: ReadonlyArray<{ model_id: string }> };
+    },
   ): Promise<EngineLike>;
 }
 
@@ -227,16 +231,18 @@ export function createWebLLMController(deps: WebLLMDeps): WebLLMController {
       }
 
             createdWorker = deps.createWorker();
-      const created = await library.CreateWebWorkerMLCEngine(createdWorker, modelId, {
-        initProgressCallback: (report) => {
-          if (myEpoch !== epoch) return;
-          setState({
-            progress: Math.max(state.progress, toPercent(report.progress)),
-            statusText: report.text,
-          });
-        },
-        useIndexedDBCache: false,
-      });
+const created = await library.CreateWebWorkerMLCEngine(createdWorker, modelId, {
+  initProgressCallback: (report) => {
+    if (myEpoch !== epoch) return;
+    setState({
+      progress: Math.max(state.progress, toPercent(report.progress)),
+      statusText: report.text,
+    });
+  },
+  useIndexedDBCache: false,
+  // Явно передаем конфигурацию моделей, чтобы Vite не потерял её при сборке
+  appConfig: library.prebuiltAppConfig,
+});
 
       if (myEpoch !== epoch) {
         // Пока модель грузилась, её выгрузили: освобождаем всё, что успели создать
