@@ -1,24 +1,18 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
+import { webllmAssistant } from '@arronqzy/abuilder/vite';
 
 export default defineConfig({
   base: '/english-steps/',
-  plugins: [react()],
+  plugins: [
+    react(),
+    webllmAssistant(), // <-- Плагин для WebLLM
+  ],
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
-  build: {
-    rollupOptions: {
-      external: ['@mlc-ai/web-llm'],
-    },
-  },
-  worker: {
-    format: 'es',
-    rollupOptions: {
-      external: ['@mlc-ai/web-llm'],
-    },
-  },
+  // Убираем external, чтобы WebLLM собрался в бандл
 });
