@@ -1,16 +1,20 @@
 import {
   BarChart3,
   BookOpen,
+  GraduationCap,
   Headphones,
   Home,
   Layers,
   ListChecks,
+  Mic,
   type LucideIcon,
 } from 'lucide-react';
 
 export interface Section {
   to: string;
   label: string;
+  /** Короткая подпись для узкой нижней панели на телефонах; если нет — используется label */
+  shortLabel?: string;
   description: string;
   icon: LucideIcon;
 }
@@ -40,6 +44,19 @@ export const SECTIONS: readonly Section[] = [
     label: 'Аудио',
     description: 'Слушайте слово и вспоминайте, что оно значит',
     icon: Headphones,
+  },
+  {
+    to: '/pronunciation',
+    label: 'Речь',
+    description: 'Произносите слова вслух и получайте оценку',
+    icon: Mic,
+  },
+  {
+    to: '/grammar',
+    label: 'Грамматика',
+    shortLabel: 'Правила',
+    description: 'Короткие правила с примерами и тест по каждой теме',
+    icon: GraduationCap,
   },
   {
     to: '/dictionary',

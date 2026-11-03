@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { AddWordForm, normalizeEn } from '@/components/dictionary/AddWordForm';
 import { WordCard } from '@/components/dictionary/WordCard';
+import { DataSettings } from '@/components/ui/DataSettings';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { FOCUS_RING, PRIMARY_BUTTON, SECONDARY_BUTTON } from '@/components/ui/styles';
 import {
@@ -150,6 +151,8 @@ export default function DictionaryPage() {
             </button>
           </div>
         )}
+        {/* key: при импорте в пустой словарь экран меняется на список, а блок (и его сообщение) должен сохраниться */}
+        <DataSettings key="data-settings" />
       </PageContainer>
     );
   }
@@ -241,6 +244,8 @@ export default function DictionaryPage() {
           ))}
         </ul>
       )}
+
+      <DataSettings key="data-settings" />
     </PageContainer>
   );
 }

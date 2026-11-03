@@ -2,10 +2,13 @@ import { HashRouter, Route, Routes } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import DictionaryPage from '@/pages/DictionaryPage';
 import FlashcardsPage from '@/pages/FlashcardsPage';
+import GrammarPage from '@/pages/GrammarPage';
+import GrammarTopicPage from '@/pages/GrammarTopicPage';
 import HomePage from '@/pages/HomePage';
 import ListeningPage from '@/pages/ListeningPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import ProgressPage from '@/pages/ProgressPage';
+import PronunciationPage from '@/pages/PronunciationPage';
 import QuizPage from '@/pages/QuizPage';
 
 /**
@@ -24,6 +27,9 @@ export default function App() {
             <Route path="/flashcards" element={<FlashcardsPage />} />
             <Route path="/quiz" element={<QuizPage />} />
             <Route path="/listening" element={<ListeningPage />} />
+            <Route path="/pronunciation" element={<PronunciationPage />} />
+            <Route path="/grammar" element={<GrammarPage />} />
+            <Route path="/grammar/:topicId" element={<GrammarTopicPage />} />
             <Route path="/dictionary" element={<DictionaryPage />} />
             <Route path="/progress" element={<ProgressPage />} />
             <Route path="*" element={<NotFoundPage />} />
