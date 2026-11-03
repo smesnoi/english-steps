@@ -5,7 +5,10 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- Скрипт темы (добавили) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://esm.run https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://esm.run https://cdn.jsdelivr.net https://huggingface.co https://cdn-lfs.huggingface.co; style-src 'self' 'unsafe-inline';">
+    
+    <title>English Steps — английский с нуля</title>
+    
     <script>
       (function () {
         try {
@@ -17,8 +20,6 @@
         } catch (e) {}
       })();
     </script>
-
-    <title>English Steps — английский с нуля</title>
   </head>
   <body>
     <div id="root"></div>
