@@ -12,7 +12,7 @@ const webLLM = createWebLLMController({
     typeof navigator === 'undefined'
       ? undefined
       : (navigator as unknown as { gpu?: GpuLike }).gpu,
-  importWebLLM: () => import('@mlc-ai/web-llm') as unknown as Promise<WebLLMModuleLike>,
+  importWebLLM: () => import(/* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.79/+esm') as unknown as Promise<WebLLMModuleLike>,
   createWorker: () =>
     new Worker(new URL('../workers/webllm.worker.ts', import.meta.url), { type: 'module' }),
 });

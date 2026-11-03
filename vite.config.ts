@@ -10,19 +10,4 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
-  optimizeDeps: {
-    exclude: ['@mlc-ai/web-llm'],
-  },
-  build: {
-    minify: false,
-    rollupOptions: {
-      external: ['@mlc-ai/web-llm'],
-    },
-  },
-  worker: {
-    format: 'es',
-    rollupOptions: {
-      external: ['@mlc-ai/web-llm'],
-    },
-  },
 });

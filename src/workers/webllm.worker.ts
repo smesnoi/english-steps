@@ -1,9 +1,10 @@
-import { WebWorkerMLCEngineHandler } from '@mlc-ai/web-llm';
-
-// Модель работает в отдельном потоке, чтобы страница не подвисала при загрузке и генерации.
-// Сообщения от страницы обрабатывает обработчик из web-llm.
-const handler = new WebWorkerMLCEngineHandler();
-
-self.onmessage = (message: MessageEvent) => {
-  handler.onmessage(message);
-};
+// Загружаем библиотеку с CDN
+// @ts-expect-error — модуль загружается с внешнего URL, его типов нет в проекте
+import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.79/+esm').then((module) => {
+  const handler = new module.WebWorkerMLCEngineHandler();
+  self.onmessage = (message: MessageEvent) => {
+    handler.onmessage(message);
+  };
+}).catch((error) => {
+  console.error('Failed to load WebLLM from CDN in worker:', error);
+});
