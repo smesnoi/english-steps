@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/utils/srs.test.ts src/utils/phonetics.test.ts src/utils/webllmEngine.test.ts src/utils/aiExamples.test.ts src/utils/grammarExercises.test.ts src/store/useWordStore.test.ts"
+    "test": "tsx --test src/utils/srs.test.ts src/utils/phonetics.test.ts src/utils/webllmEngine.test.ts src/utils/aiExamples.test.ts src/utils/cooldown.test.ts src/utils/grammarExercises.test.ts src/utils/aiImage.test.ts src/store/useWordStore.test.ts"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "0.2.79",

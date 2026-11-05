@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Check, Volume2, X } from 'lucide-react';
 import { AiExample } from '@/components/flashcards/AiExample';
+import { AiImage } from '@/components/flashcards/AiImage';
 import { EmptyQueue } from '@/components/session/EmptyQueue';
 import { SessionProgress } from '@/components/session/SessionProgress';
 import { SessionSummary, type SessionResult } from '@/components/session/SessionSummary';
@@ -196,7 +197,7 @@ function FlipCard({ word, isFlipped, onFlip }: FlipCardProps) {
       </div>
 
       {/*
-        ИИ-примеры — отдельный слой поверх нижней части обратной стороны, а не внутри карточки:
+        ИИ-примеры и картинка — отдельный слой поверх нижней части обратной стороны, а не внутри карточки:
         карточка — role="button", и кнопки внутри неё переворачивали бы её, не получали бы клавиатуру
         и были бы скрыты от скринридеров. Слой виден только на перевёрнутой карточке
         (invisible убирает его и из порядка табуляции). Высота карточки не меняется,
@@ -207,7 +208,8 @@ function FlipCard({ word, isFlipped, onFlip }: FlipCardProps) {
           isFlipped ? 'visible opacity-100 delay-300' : 'invisible opacity-0'
         }`}
       >
-       <AiExample word={word.en} />
+        <AiExample word={word.en} />
+        <AiImage word={word.en} />
       </div>
 
       {/* Озвучка — заглушка. Кнопка рядом с карточкой, а не внутри: кнопка в кнопке недопустима */}
