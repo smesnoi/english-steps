@@ -4,6 +4,7 @@ import {
   GraduationCap,
   Headphones,
   Home,
+  Image,
   Layers,
   ListChecks,
   Mic,
@@ -50,6 +51,13 @@ export const SECTIONS: readonly Section[] = [
     label: 'Речь',
     description: 'Произносите слова вслух и получайте оценку',
     icon: Mic,
+  },
+  {
+    to: '/visual',
+    label: 'Картинки',
+    shortLabel: 'Фото',
+    description: 'Угадайте слово по картинке, сгенерированной ИИ',
+    icon: Image,
   },
   {
     to: '/grammar',

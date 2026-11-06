@@ -7,10 +7,6 @@ export const IMAGE_SIZE = 512;
 /** Слова пользователя могут быть любыми (в том числе импортированными), поэтому длину ограничиваем. */
 const MAX_WORD_LENGTH = 100;
 
-/**
- * Приводит слово к безопасному виду для запроса: управляющие символы и переводы строк
- * становятся пробелами, пробелы схлопываются, слишком длинный текст обрезается.
- */
 export function sanitizeWord(word: string): string {
   return word
     .replace(/[\u0000-\u001f\u007f]/g, ' ')
@@ -20,15 +16,15 @@ export function sanitizeWord(word: string): string {
     .trim();
 }
 
-/** Описание для генерации: слово + «реалистичное фото на белом фоне». */
+export function normalizeImageWord(word: string): string | null {
+  const cleaned = sanitizeWord(word);
+  return cleaned === '' ? null : cleaned;
+}
+
 export function buildImagePrompt(word: string): string {
   return `${sanitizeWord(word)}${PROMPT_SUFFIX}`;
 }
 
-/**
- * Пришла ли картинка того размера, который мы просили. (Оставлено для совместимости,
- * но в Cloudflare Worker размер может быть другим, поэтому проверку в AiImage мы уберем).
- */
 export function isExpectedImageSize(width: number, height: number): boolean {
   return width === IMAGE_SIZE && height === IMAGE_SIZE;
 }
@@ -37,8 +33,12 @@ export function isExpectedImageSize(width: number, height: number): boolean {
  * Адрес картинки для слова. Мы обращаемся к нашему Cloudflare Worker,
  * который принимает слово в параметре `word`.
  */
-export function buildImageUrl(word: string, seed: number): string | null {
-  if (sanitizeWord(word) === '') return null;
+export function buildImageUrl(word: string, seed: number, refresh?: number): string | null {
+  const cleanWord = sanitizeWord(word);
+  if (cleanWord === '') return null;
+  
   const safeSeed = Number.isFinite(seed) ? Math.trunc(seed) : 0;
-  return `${IMAGE_SERVICE_ORIGIN}/?word=${encodeURIComponent(word)}&seed=${safeSeed}`;
+  const finalSeed = refresh !== undefined ? refresh : safeSeed;
+  
+  return `${IMAGE_SERVICE_ORIGIN}/?word=${encodeURIComponent(cleanWord)}&seed=${finalSeed}`;
 }

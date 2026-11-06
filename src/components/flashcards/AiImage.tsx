@@ -1,123 +1,112 @@
 import { useEffect, useState } from 'react';
 import { AI_BUTTON } from '@/components/ui/styles';
-import { useCooldownSeconds } from '@/hooks/useCooldownSeconds';
 import { buildImageUrl } from '@/utils/aiImage';
-import { createCooldown, type Cooldown } from '@/utils/cooldown';
 
-/** Бесплатный сервис иногда отвечает очень долго: после этого времени сдаёмся. */
+/** Генерация занимает секунды, но иногда сервис отвечает очень долго: после этого времени сдаёмся. */
 const DEFAULT_TIMEOUT_MS = 45_000;
 
-/** После любого сбоя повторять запрос нельзя столько миллисекунд. */
-const ERROR_COOLDOWN_MS = 30_000;
-
-/** Одна пауза на всё приложение. */
-const sharedImageCooldown = createCooldown(ERROR_COOLDOWN_MS);
-
-const UNAVAILABLE_MESSAGE = 'Сервис картинок временно недоступен. Попробуйте позже.';
+const SIZE_CLASSES = {
+  small: 'h-32 w-32',
+  large: 'h-64 w-64 sm:h-72 sm:w-72',
+} as const;
 
 interface AiImageProps {
-  /** Английское слово */
   word: string;
-  /** Сколько ждать картинку, мс. */
+  autoLoad?: boolean;
+  size?: 'small' | 'large';
   timeoutMs?: number;
-  /** Пауза после сбоя. */
-  cooldown?: Cooldown;
 }
 
 export function AiImage({
   word,
+  autoLoad = false,
+  size = 'small',
   timeoutMs = DEFAULT_TIMEOUT_MS,
-  cooldown = sharedImageCooldown,
 }: AiImageProps) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // При autoLoad запрос начинается уже с первой отрисовки
+  const [imageUrl, setImageUrl] = useState<string | null>(() =>
+    autoLoad ? buildImageUrl(word, Date.now()) : null,
+  );
+  const [isLoading, setIsLoading] = useState(imageUrl !== null);
   const [failed, setFailed] = useState(false);
-  const secondsLeft = useCooldownSeconds(cooldown);
 
   // Пока идёт загрузка, ждём не дольше timeoutMs
   useEffect(() => {
     if (!isLoading) return undefined;
     const timer = window.setTimeout(() => {
       setIsLoading(false);
-      setImageUrl(null); // убираем <img>: браузер прекращает ждать ответ
+      setImageUrl(null);
       setFailed(true);
-      cooldown.start();
     }, timeoutMs);
     return () => window.clearTimeout(timer);
-  }, [isLoading, imageUrl, timeoutMs, cooldown]);
+  }, [isLoading, imageUrl, timeoutMs]);
 
-  // Слово без пригодных символов нарисовать нельзя
+  // Слово нарисовать нельзя — ничего не показываем
   if (buildImageUrl(word, 0) === null) return null;
 
-  const handleFailure = () => {
-    setIsLoading(false);
-    setImageUrl(null);
-    setFailed(true);
-    cooldown.start();
-  };
-
-  const showImage = () => {
-    if (secondsLeft > 0) return;
-    const url = buildImageUrl(word, Date.now());
+  const start = (refresh?: number) => {
+    const url = buildImageUrl(word, Date.now(), refresh);
     if (url === null) return;
     setFailed(false);
     setIsLoading(true);
     setImageUrl(url);
   };
 
+  const handleFailure = () => {
+    setIsLoading(false);
+    setImageUrl(null);
+    setFailed(true);
+  };
+
   if (imageUrl === null) {
-    const unavailable = failed || secondsLeft > 0;
+    if (failed) {
+      return (
+        <div className={`flex flex-col items-center gap-3 ${size === 'large' ? `justify-center ${SIZE_CLASSES.large}` : ''}`}>
+          <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+            Не удалось загрузить картинку
+          </p>
+          <button type="button" onClick={() => start()} className={AI_BUTTON}>
+            Попробовать снова
+          </button>
+        </div>
+      );
+    }
     return (
       <div className="space-y-2">
-        {unavailable && (
-          <p role="alert" className="text-sm text-red-700 dark:text-red-300">
-            {UNAVAILABLE_MESSAGE}
-          </p>
-        )}
-        {secondsLeft > 0 ? (
-          <p className="text-xs text-stone-500 dark:text-stone-400">
-            Повторить можно через {secondsLeft} с.
-          </p>
-        ) : (
-          <button type="button" onClick={showImage} className={AI_BUTTON}>
-            {failed ? 'Повторить' : '🖼️ Показать картинку'}
-          </button>
-        )}
-        {!unavailable && (
-          <p className="text-xs text-stone-500 dark:text-stone-400">
-            Картинку рисует наш Cloudflare Worker (Workers AI): слово отправляется на его сервер.
-          </p>
-        )}
+        <button type="button" onClick={() => start()} className={AI_BUTTON}>
+          🖼️ Показать картинку
+        </button>
+        <p className="text-xs text-stone-500 dark:text-stone-400">
+          Картинку рисует ИИ на сервере Cloudflare: слово отправляется на него.
+        </p>
       </div>
     );
   }
 
   return (
-    <figure>
+    <figure className="flex flex-col items-center">
       {isLoading && (
-        <div
-          role="status"
-          className="flex h-32 w-32 animate-pulse items-center justify-center rounded-xl bg-teal-200 text-xs font-medium text-teal-900 dark:bg-teal-900 dark:text-teal-100"
-        >
+        <div className={`flex animate-pulse items-center justify-center rounded-2xl bg-teal-200 text-sm font-medium text-teal-900 dark:bg-teal-900 dark:text-teal-100 ${SIZE_CLASSES[size]}`}>
           Рисую картинку…
         </div>
       )}
-      
-      {/* Убрана проверка isExpectedImageSize, так как Workers AI отдает картинки другого размера */}
       <img
         key={imageUrl}
         src={imageUrl}
-        alt={`Иллюстрация к слову «${word}», созданная ИИ`}
-        width={128}
-        height={128}
+        alt="Иллюстрация к слову, созданная ИИ"
         decoding="async"
-        onLoad={() => setIsLoading(false)}
+        onLoad={(event) => {
+          if (event.currentTarget.naturalWidth === 0) {
+            handleFailure();
+            return;
+          }
+          setIsLoading(false);
+        }}
         onError={handleFailure}
-        className={isLoading ? 'invisible h-0 w-0' : 'h-32 w-32 rounded-xl object-cover'}
+        className={isLoading ? 'invisible h-0 w-0' : `${SIZE_CLASSES[size]} rounded-2xl object-cover`}
       />
-      
       <div className="mt-2 flex items-center gap-2">
-        <button type="button" onClick={showImage} disabled={isLoading} className={AI_BUTTON}>
+        <button type="button" onClick={() => start(Date.now())} disabled={isLoading} className={AI_BUTTON}>
           Обновить картинку
         </button>
       </div>

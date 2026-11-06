@@ -10,6 +10,7 @@ import NotFoundPage from '@/pages/NotFoundPage';
 import ProgressPage from '@/pages/ProgressPage';
 import PronunciationPage from '@/pages/PronunciationPage';
 import QuizPage from '@/pages/QuizPage';
+import VisualFlashcardsPage from '@/pages/VisualFlashcardsPage';
 
 /**
  * HashRouter (адреса вида /#/quiz): обновление страницы не даёт 404 на статическом
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="/quiz" element={<QuizPage />} />
             <Route path="/listening" element={<ListeningPage />} />
             <Route path="/pronunciation" element={<PronunciationPage />} />
+            <Route path="/visual" element={<VisualFlashcardsPage />} />
             <Route path="/grammar" element={<GrammarPage />} />
             <Route path="/grammar/:topicId" element={<GrammarTopicPage />} />
             <Route path="/dictionary" element={<DictionaryPage />} />
